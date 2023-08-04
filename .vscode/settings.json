@@ -1,3 +1,11 @@
 {
+  "[javascriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "editor.formatOnSave": true,
+  "cSpell.enableFiletypes": ["javascript"],
+  "cSpell.language": "en,pt,pt_BR",
   "cSpell.words": ["Parens"]
 }
