@@ -4,25 +4,37 @@ import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 
 const useAsync = (asyncFunction, shouldRun) => {
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [status, setStatus] = useState('idle');
+  const [state, setState] = useState({
+    result: null,
+    error: null,
+    status: 'idle',
+  });
 
   const run = useCallback(async () => {
-    console.log('EFFECT', new Date().toLocaleDateString());
-    setResult(null);
-    setError(null);
     await new Promise((r) => setTimeout(r, 2000));
-    setStatus('pending');
+
+    setState({
+      result: null,
+      error: null,
+      status: 'pending',
+    });
+
+    await new Promise((r) => setTimeout(r, 2000));
 
     return asyncFunction()
       .then((response) => {
-        setResult(response);
-        setStatus('settled');
+        setState({
+          result: response,
+          error: null,
+          status: 'settled',
+        });
       })
-      .catch((error) => {
-        setError(error);
-        setStatus('error');
+      .catch((err) => {
+        setState({
+          result: null,
+          error: err,
+          status: 'error',
+        });
       });
   }, [asyncFunction]);
 
@@ -31,10 +43,11 @@ const useAsync = (asyncFunction, shouldRun) => {
       run();
     }
   }, [run, shouldRun]);
-  return [run, result, error, status];
+  return [run, state.result, state.error, state.status];
 };
 
 const fetchData = async () => {
+  // throw new Error('Que chato!');
   await new Promise((r) => setTimeout(r, 2000));
   const data = await fetch('https://jsonplaceholder.typicode.com/posts');
   const json = await data.json();
@@ -45,13 +58,32 @@ const fetchData = async () => {
 function App() {
   const [posts, setPosts] = useState(null);
   const [reFetchData, result, error, status] = useAsync(fetchData, true);
+  const [reFetchData2, result2, error2, status2] = useAsync(fetchData, true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      reFetchData();
+    }, 6000);
+    reFetchData();
+  }, [reFetchData]);
+
+  useEffect(() => {
+    console.log(result2);
+  }, [result2]);
+
+  function handleClick() {
+    reFetchData();
+  }
+
   if (status === 'idle') {
     return (
       <>
         <h3>
           <pre>
             {' '}
-            <strong style={{ fontSize: '3rem' }}>Nada Executado</strong>{' '}
+            <strong style={{ fontSize: '3rem' }}>
+              idle: Nada Executado
+            </strong>{' '}
           </pre>
         </h3>
       </>
@@ -63,7 +95,7 @@ function App() {
         <h3>
           <pre>
             <strong style={{ color: 'red', fontSize: '3rem' }}>
-              Loading...
+              pending: Loading...
             </strong>
           </pre>
         </h3>
@@ -74,7 +106,7 @@ function App() {
     return (
       <>
         <h3>
-          <pre>{JSON.stringify(error, null, 2)}</pre>
+          <pre>error: {error.message}</pre>
         </h3>
       </>
     );
@@ -92,7 +124,10 @@ function App() {
         </div>
         <h1>Vite + React My Own Hook 3</h1>
         <h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+          <pre onClick={handleClick}>
+            {' '}
+            settled: {JSON.stringify(result, null, 2)}
+          </pre>
         </h3>
       </>
     );
